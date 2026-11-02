@@ -6,6 +6,7 @@ from app.routes.transactions import transactions_bp
 
 app = Flask(__name__)
 init_db(app)
+app.json.sort_keys = False
 app.register_blueprint(transactions_bp)
 
 @app.route('/')
