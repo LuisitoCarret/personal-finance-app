@@ -158,3 +158,62 @@ def delete_transaction(transac_id):
     db.session.commit()
 
     return jsonify({"message":"Transaction deleted successfully"}),200
+
+@transactions_bp.route("/transactions/stats/by-category",methods=['GET'])
+def stats_category():
+    month_param = request.args.get('year')
+
+    if validate_date(month_param):
+       date_normal = datetime.strptime(month_param,"%Y")
+       year = date_normal.year
+    else:
+       today = datetime.now()
+       year = today.year
+
+    query_category = (select(Transactions.category,func.sum(Transactions.amount)).where(
+        extract('year',Transactions.transaction_date) == year
+    ).group_by(Transactions.category))
+
+    rows = db.session.execute(query_category)
+    print(rows)
+    result = []
+
+    for category,amount in rows:
+        result.append({
+            "category":category,
+            "amount":amount
+        })
+
+    return jsonify(result),200
+
+@transactions_bp.route("/transactions/stats/by-month",methods=['GET'])
+def stats_month():
+    month_param = request.args.get('year')
+
+    if validate_date(month_param):
+       date_normal = datetime.strptime(month_param,"%Y")
+       year = date_normal.year
+    else:
+       today = datetime.now()
+       year = today.year
+
+    query_category = (select(extract('month',Transactions.transaction_date),func.sum(Transactions.amount)).where(
+            extract('year',Transactions.transaction_date) == year
+        ).group_by(extract('month',Transactions.transaction_date)))
+
+    rows = db.session.execute(query_category)
+
+    totals = {}
+    result = []
+
+    for month,amount in rows:
+       totals[month] = amount
+
+    for month in range(1,13):
+     month_amount = totals.get(month,0)
+     result.append({
+         "month":month,
+         "amount":month_amount
+     })
+
+    return jsonify(result),200
