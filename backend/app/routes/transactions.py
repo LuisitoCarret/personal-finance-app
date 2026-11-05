@@ -1,7 +1,8 @@
-from flask import request,Blueprint,jsonify, session
-from sqlalchemy import func, insert, select
+from datetime import datetime
+from flask import request,Blueprint,jsonify
+from sqlalchemy import extract, func, select
 from app.models.models import Transactions
-from app.validations.validdators import validate_transaction_id
+from app.validators.validations_transac import validate_date, validate_dict, validate_transaction_id, validate_fields
 from config_db import db
 import math
 
@@ -12,11 +13,39 @@ def get_transactions():
     page = request.args.get('page',1,type=int)
     per_page = request.args.get('per_page',10,type=int)
     offset_value = (page - 1) * per_page
-    query = select(Transactions).order_by(Transactions.transaction_date.desc())
+
+    month_param = request.args.get('month')
+
+    if validate_date(month_param):
+       date_normal = datetime.strptime(month_param,"%Y-%m")
+       month = date_normal.month
+       year = date_normal.year
+    else:
+       today = datetime.now()
+       month = today.month
+       year = today.year
+    
+    query = (select(Transactions).where(
+       extract('year',Transactions.transaction_date) == year,
+       extract('month',Transactions.transaction_date) == month
+    )
+    .order_by(Transactions.transaction_date.desc()))
+
     paginated_query = query.offset(offset_value).limit(per_page)
     rows = db.session.scalars(paginated_query).all()
-    total = db.session.query(func.count(Transactions.id)).scalar()
-    total_pages = math.ceil(total/per_page) if total > 0 else 0
+    total_items = len(rows)
+    total_pages = math.ceil(total_items/per_page) if total_items > 0 else 0
+
+    query_expense = (select(func.sum(Transactions.amount)).where(
+        extract('year',Transactions.transaction_date) == year,
+        extract('month',Transactions.transaction_date) == month
+    ))
+    
+    total_amount = db.session.scalar(query_expense)
+
+    if total_amount is None:
+        total_amount = 0.0
+    
     result = []
 
     for t in rows:
@@ -24,7 +53,6 @@ def get_transactions():
             "id": t.id,
             "user_id": t.user_id,
             "amount": t.amount,
-            "type" : t.type,
             "category" : t.category,
             "description": t.description,
             "date": t.transaction_date.isoformat()
@@ -32,7 +60,8 @@ def get_transactions():
 
     return jsonify({
         "items": result,
-        "total_items": total,
+        "total_amount":total_amount,
+        "total_items": total_items,
         "per_page": per_page,
         "current_page": page,
         "total_pages": total_pages
@@ -43,19 +72,18 @@ def get_one_transaction(transac_id):
     errors = validate_transaction_id(transac_id)
 
     if errors:
-        return jsonify({"message":errors}),400
+        return errors,400
     
     query = select(Transactions).where(Transactions.id == transac_id)
     transaction = db.session.scalar(query)
 
     if transaction is None:
-       return jsonify({"message":"Transaction not found"}),400
+       return jsonify({"message":"Transaction not found"}),404
     
     result = {
         "id": transaction.id,
         "user_id": transaction.user_id,
         "amount": transaction.amount,
-        "type" : transaction.type,
         "category" : transaction.category,
         "description": transaction.description,
         "date": transaction.transaction_date.isoformat(),
@@ -66,11 +94,18 @@ def get_one_transaction(transac_id):
 @transactions_bp.route("/add/transactions",methods=['POST'])
 def create_transaction():
     data = request.get_json(silent=True)
+    errors = validate_dict(data)
+    errors_data = validate_fields(data)
+
+    if errors:
+        return errors,400
+    elif errors_data:
+        return errors_data,400
+
     new_item = Transactions(
         user_id = data['user_id'],
         amount = data['amount'],
         description = data['description'],
-        type = data['type'],
         category = data['category'],
     )
 
@@ -84,10 +119,22 @@ def update_transaction(transac_id):
     query = select(Transactions).where(Transactions.id == transac_id)
     item = db.session.scalar(query)
     data = request.get_json(silent=True)
+    errors_id = validate_transaction_id(transac_id)
+    errors = validate_dict(data)
+    errors_fields = validate_fields(data)
+
+    if errors_id:
+        return errors_id,400
+    elif item is None:
+        return jsonify({"message":"Transaction not found"}),404
+    elif errors:
+        return errors,400
+    elif errors_fields:
+        return errors_fields,400
+
     item.user_id = data.get("user_id",item.user_id)
     item.amount = data.get("amount",item.amount)
     item.description = data.get("description",item.description)
-    item.type = data.get("type",item.type)
     item.category = data.get("category",item.category)
 
     db.session.commit()
@@ -99,13 +146,13 @@ def delete_transaction(transac_id):
     errors = validate_transaction_id(transac_id)
 
     if errors:
-        return jsonify({"message":errors}),400
+        return errors,400
     
     query = select(Transactions).where(Transactions.id == transac_id)
     item = db.session.scalar(query)
 
     if item is None:
-        return jsonify({"message":"Transaction does not exist"}),400
+        return jsonify({"message":"Transaction not found"}),404
     
     db.session.delete(item)
     db.session.commit()

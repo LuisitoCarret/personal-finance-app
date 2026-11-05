@@ -13,16 +13,5 @@ app.register_blueprint(transactions_bp)
 def home():
     return "<h1>Hello Flask!</h1>"
 
-@app.route('/testdb')
-def testing_db():
-  total = db.session.execute(text("SELECT COUNT(*) FROM users")).scalar()
-  return {"users":total}
-
-@app.route('/testmodels')
-def test_models():
-    total = db.session.scalar(select(func.count()).select_from(Users))
-    return {"users": total}
-   
-
 if __name__ == "__main__":
     app.run(debug=True)

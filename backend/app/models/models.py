@@ -10,12 +10,6 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 class Base(DeclarativeBase):
     pass
 
-
-class TransactionsType(str, enum.Enum):
-    INCOME = 'income'
-    EXPENSE = 'expense'
-
-
 class Users(Base):
     __tablename__ = 'users'
     __table_args__ = (
@@ -43,7 +37,6 @@ class Transactions(Base):
     id: Mapped[int] = mapped_column(INTEGER(unsigned=True), primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(INTEGER(unsigned=True), nullable=False)
     amount: Mapped[decimal.Decimal] = mapped_column(DECIMAL(12, 2), nullable=False)
-    type: Mapped[TransactionsType] = mapped_column(Enum(TransactionsType, values_callable=lambda cls: [member.value for member in cls]), nullable=False)
     category: Mapped[str] = mapped_column(String(50), nullable=False)
     transaction_date: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP'))
     description: Mapped[Optional[str]] = mapped_column(String(255))
