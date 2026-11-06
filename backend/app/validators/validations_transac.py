@@ -1,6 +1,6 @@
 from datetime import datetime
 
-REQUIRED_FIELDS = ['user_id','amount','description','category']
+REQUIRED_FIELDS = ['amount','description','category']
 FIELDS_CATEGORY =['Food','Personal','Others','Utilities','Transportation']
 
 def validate_transaction_id(transaction_id):
@@ -24,10 +24,7 @@ def validate_fields(data):
         if field not in data:
           errors[field] = f"Missing field {field}"
         else:
-           if field == 'user_id':
-               if data['user_id'] <= 0:
-                 errors["user_id"] = "ID must be greater than 0"
-           elif field == 'amount':
+           if field == 'amount':
                if not isinstance(data['amount'],(int,float)):
                  errors["amount"] = "Field amount must be integer or decimal"
                elif data['amount'] <= 0:
@@ -57,3 +54,25 @@ def validate_date(date_param):
       return True
    except ValueError:
       return False
+
+def validate_year(year_param):
+   if not year_param:
+      return False
+
+   try:
+      datetime.strptime(year_param,"%Y")
+      return True
+   except ValueError:
+      return False
+
+def validate_pages(pages,per_page):
+    errors={}
+    if per_page <= 0:
+         errors["per_page"] = "The per_page must be greater than 0"
+    elif per_page > 50:
+         errors["per_page"] = "The per_page limit must be less than 50"
+
+    if pages <= 0:
+       errors["pages"] = "The page must be greater than 0"
+
+    return errors

@@ -42,8 +42,12 @@ def register_users():
        password_hash = password
     )
 
-    db.session.add(new_user)
-    db.session.commit()
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({"message":"Something went wrong.Please try again later"}),500
 
     return jsonify({"message":"User created successfully"}),201
 
@@ -68,7 +72,7 @@ def login_users():
 
     is_valid = bcrypt.check_password_hash(result_username[2],data["password"])
     response = jsonify({"message":"Login successful"})
-    access_token = create_access_token(identity=result_username[0])
+    access_token = create_access_token(identity=str(result_username[0]))
     set_access_cookies(response,access_token)
 
     if is_valid is True:

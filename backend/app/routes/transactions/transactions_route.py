@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import date, datetime
 from flask import request,Blueprint,jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy import extract, func, select
 from app.models.models import Transactions
-from app.validators.validations_transac import validate_date, validate_dict, validate_transaction_id, validate_fields
+from app.validators.validations_transac import validate_date, validate_dict, validate_transaction_id, validate_fields,validate_pages,validate_year
 from config_db import db
 import math
 
@@ -15,6 +15,12 @@ def get_transactions():
     user_id = int(get_jwt_identity())
     page = request.args.get('page',1,type=int)
     per_page = request.args.get('per_page',10,type=int)
+
+    errors_pages = validate_pages(page,per_page)
+
+    if errors_pages:
+        return jsonify({"message":errors_pages}),400
+
     offset_value = (page - 1) * per_page
 
     month_param = request.args.get('month')
@@ -27,29 +33,39 @@ def get_transactions():
        today = datetime.now()
        month = today.month
        year = today.year
+
+    start_month = date(year,month,1)
+ 
+    if month == 12:
+        end_month = date(year + 1,1,1)
+    else:
+        end_month = date(year,month + 1,1)
     
     query = (select(Transactions).where(
-       extract('year',Transactions.transaction_date) == year,
-       extract('month',Transactions.transaction_date) == month,
+       Transactions.transaction_date >= start_month,
+       Transactions.transaction_date < end_month,
        Transactions.user_id == user_id
     )
     .order_by(Transactions.transaction_date.desc()))
 
     paginated_query = query.offset(offset_value).limit(per_page)
     rows = db.session.scalars(paginated_query).all()
-    total_items = len(rows)
+    rows_total = db.session.scalars(query).all()
+    total_items = len(rows_total)
     total_pages = math.ceil(total_items/per_page) if total_items > 0 else 0
 
     query_expense = (select(func.sum(Transactions.amount)).where(
-        extract('year',Transactions.transaction_date) == year,
-        extract('month',Transactions.transaction_date) == month,
-        Transactions.user_id == user_id
+       Transactions.transaction_date >= start_month,
+       Transactions.transaction_date < end_month,
+       Transactions.user_id == user_id
     ))
     
     total_amount = db.session.scalar(query_expense)
 
     if total_amount is None:
         total_amount = 0.0
+    else:
+        total_amount = float(total_amount)
     
     result = []
 
@@ -104,11 +120,13 @@ def create_transaction():
     user_id = int(get_jwt_identity())
     data = request.get_json(silent=True)
     errors = validate_dict(data)
-    errors_data = validate_fields(data)
 
     if errors:
         return jsonify({"message":errors}),400
-    elif errors_data:
+    
+    errors_data = validate_fields(data)
+
+    if errors_data:
         return jsonify({"message":errors_data}),400
 
     new_item = Transactions(
@@ -118,8 +136,12 @@ def create_transaction():
         category = data['category'],
     )
 
-    db.session.add(new_item)
-    db.session.commit()
+    try:
+        db.session.add(new_item)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({"message":"Something went wrong.Please try again later"}),500
 
     return jsonify({"message":"Transaction added successfully"}),201
 
@@ -131,24 +153,32 @@ def update_transaction(transac_id):
     item = db.session.scalar(query)
     data = request.get_json(silent=True)
     errors_id = validate_transaction_id(transac_id)
-    errors = validate_dict(data)
-    errors_fields = validate_fields(data)
 
     if errors_id:
         return jsonify({"message":errors_id}),400
-    elif item is None:
+    
+    if item is None:
         return jsonify({"message":"Transaction not found"}),404
-    elif errors:
+    
+    errors = validate_dict(data)
+    
+    if errors:
         return jsonify({"message":errors}),400
-    elif errors_fields:
+    
+    errors_fields = validate_fields(data)
+
+    if errors_fields:
         return jsonify({"message":errors_fields}),400
 
-    item.user_id = user_id
     item.amount = data.get("amount",item.amount)
     item.description = data.get("description",item.description)
     item.category = data.get("category",item.category)
 
-    db.session.commit()
+    try:
+       db.session.commit()
+    except Exception:
+       db.session.rollback()
+       return jsonify({"message":"Something went wrong.Please try again later"}),500
 
     return jsonify({"message":"Transaction updated successfully"}),200
 
@@ -166,9 +196,13 @@ def delete_transaction(transac_id):
 
     if item is None:
         return jsonify({"message":"Transaction not found"}),404
-    
-    db.session.delete(item)
-    db.session.commit()
+
+    try:
+      db.session.delete(item)
+      db.session.commit()
+    except Exception:
+      db.session.rollback()
+      return jsonify({"message":"Something went wrong.Please try again later"}),500
 
     return jsonify({"message":"Transaction deleted successfully"}),200
 
@@ -176,17 +210,21 @@ def delete_transaction(transac_id):
 @jwt_required()
 def stats_category():
     user_id = int(get_jwt_identity())
-    month_param = request.args.get('year')
+    year_param = request.args.get('year')
 
-    if validate_date(month_param):
-       date_normal = datetime.strptime(month_param,"%Y")
+    if validate_year(year_param):
+       date_normal = datetime.strptime(year_param,"%Y")
        year = date_normal.year
     else:
        today = datetime.now()
        year = today.year
 
+    start_year = date(year, 1, 1)
+    end_year = date(year + 1, 1, 1)
+    
     query_category = (select(Transactions.category,func.sum(Transactions.amount)).where(
-        extract('year',Transactions.transaction_date) == year,
+        Transactions.transaction_date >= start_year,
+        Transactions.transaction_date < end_year,
         Transactions.user_id == user_id
     ).group_by(Transactions.category))
 
@@ -205,18 +243,21 @@ def stats_category():
 @jwt_required()
 def stats_month():
     user_id = int(get_jwt_identity())
-    month_param = request.args.get('year')
+    year_param = request.args.get('year')
 
-    if validate_date(month_param):
-       date_normal = datetime.strptime(month_param,"%Y")
+    if validate_year(year_param):
+       date_normal = datetime.strptime(year_param,"%Y")
        year = date_normal.year
     else:
        today = datetime.now()
        year = today.year
 
+    start_year = date(year, 1, 1)
+    end_year = date(year + 1, 1, 1)
+
     query_category = (select(extract('month',Transactions.transaction_date),func.sum(Transactions.amount)).where(
-            extract('year',Transactions.transaction_date) == year,
-            Transactions.user_id == user_id
+            Transactions.transaction_date >= start_year,
+            Transactions.user_id == user_id < end_year
         ).group_by(extract('month',Transactions.transaction_date)))
 
     rows = db.session.execute(query_category)
