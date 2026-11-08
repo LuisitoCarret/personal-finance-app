@@ -3,7 +3,7 @@ import string
 
 FIELDS_USER = ['first_name','last_name','email','username','password']
 FIELDS_LOGIN = ['username','password']
-EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+EMAIL_REGEX = r'^[a-zA-Z0-9_]+([.][a-zA-Z0-9_]+)*@[a-zA-Z0-9_]+([.][a-zA-Z0-9_]+)*[.][a-zA-Z]{2,5}$'
 
 def validate_dict(data):
     errors={}
@@ -31,14 +31,21 @@ def validation_fields_register(data):
             errors["email"] = "The field Email must be string"
          elif not re.match(EMAIL_REGEX,data[field]):
             errors["email"] = "The field Email must have format of email"
+         elif not data[field].endswith("@gmail.com"):
+            errors["email"] = "Invalid Gmail domain"
       if field == 'username':
          if not isinstance(data[field],str):
             errors["username"] = "The field Username must be string"
       if field == 'password':
          if not isinstance(data[field],str):
             errors["password"] = "The field Password must be string"
-
+            continue
+ 
          password = data[field].strip()
+
+         if len(password) > 16:
+            errors["password"] = "The Password only accepted maximun 16 caracters"
+            continue
 
          has_number = False
          has_sign = False
@@ -58,9 +65,6 @@ def validation_fields_register(data):
             errors["password"] = "The Password must have one capital letter"
          elif not has_sign:
             errors["password"] = "The Password must have one sign of puntuation"
-
-         if len(password) > 16:
-            errors["message"] = "The Password only accepted maximun 16 caracters"
 
    return errors
 
