@@ -3,7 +3,7 @@ from sqlalchemy import select
 from app.models.models import Users
 from config_db import db
 from app.validators.validations_user import validation_fields_register,validate_dict,validation_login
-from app.extensions._init_ import bcrypt
+from app.extensions.config_extensions import bcrypt
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required,set_access_cookies, unset_jwt_cookies
 
 user_bp = Blueprint("users",__name__,url_prefix="/api")    
@@ -71,18 +71,18 @@ def login_users():
         return jsonify({"message":"Invalid credentials"}),401
 
     is_valid = bcrypt.check_password_hash(result_username[2],data["password"])
-    response = jsonify({"message":"Login successful"})
-    access_token = create_access_token(identity=str(result_username[0]))
-    set_access_cookies(response,access_token)
 
     if is_valid is True:
-        return response
+     response = jsonify({"message":"Login successfully"})
+     access_token = create_access_token(identity=str(result_username[0]))
+     set_access_cookies(response,access_token)
+     return response
     else:
         return jsonify({"message":"Invalid credentials"}),401
 
 @user_bp.route("/users/logout",methods=['POST'])
 def logout():
-    response = jsonify({"message": "Logout successful"})
+    response = jsonify({"message": "Logout successfully"})
     unset_jwt_cookies(response)
     return response
 

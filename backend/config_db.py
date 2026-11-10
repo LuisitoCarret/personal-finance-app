@@ -11,6 +11,6 @@ def init_db(app):
     password = os.environ.get("MYSQL_DATABASE_PASSWORD")
     database = os.environ.get("MYSQL_DATABASE_DB")
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{user}:{password}@{host}/{database}'
+    app.config.setdefault('SQLALCHEMY_DATABASE_URI',f'mysql+pymysql://{user}:{password}@{host}/{database}')
 
     db.init_app(app)

@@ -257,7 +257,8 @@ def stats_month():
 
     query_category = (select(extract('month',Transactions.transaction_date),func.sum(Transactions.amount)).where(
             Transactions.transaction_date >= start_year,
-            Transactions.user_id == user_id < end_year
+            Transactions.transaction_date < end_year,
+            Transactions.user_id == user_id
         ).group_by(extract('month',Transactions.transaction_date)))
 
     rows = db.session.execute(query_category)
