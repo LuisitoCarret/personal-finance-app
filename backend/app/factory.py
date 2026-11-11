@@ -5,6 +5,7 @@ from app.routes.transactions.transactions_route import transactions_bp
 from app.routes.users.users_route import user_bp
 from app.extensions.config_extensions import init_extension
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 def create_app(test_config=None):
     load_dotenv()
@@ -23,6 +24,13 @@ def create_app(test_config=None):
     app.register_blueprint(user_bp)
     app.register_blueprint(transactions_bp)
 
+    origins = os.environ.get("CORS_ORIGINS")
+    CORS(
+       app,
+       resources={r"/api/*":{"origins":origins}},
+       supports_credentials=True,
+    )
+    
     @app.route('/')
     def home():
      return "<h1>Hello Flask!</h1>"
