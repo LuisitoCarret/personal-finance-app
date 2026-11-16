@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 import { allTransactionsByMonthAndYear } from "../../services/transactionService";
+import { useNavigate } from "react-router-dom";
+import PrivateNavbar from "../../components/PrivateNavbar";
 
 function SelectHistory({ filterChange }){
     const [year,setYear] = useState('');
@@ -26,7 +28,7 @@ function SelectHistory({ filterChange }){
                 <option value="11">November</option>
                 <option value="12">December</option>
             </select>
-            <input type="text" placeholder="Enter a year" value={year} onChange={e=>setYear(e.target.value)} />
+            <input type="text" placeholder="Enter a year" value={year} onChange={e=>{setYear(e.target.value);filterChange(month,e.target.value)}} />
             <button onClick={handleSearch}>Search</button>
          </div>
         </>
@@ -36,6 +38,15 @@ function SelectHistory({ filterChange }){
 function ListHistory({ month,year }){
    const [listHistory,setListHistory] = useState([]);
    const [monthyTotal,setMonthyTotal] = useState(0);
+   const navigate = useNavigate();
+
+    const goToMonthExpenses = () => {
+        navigate(`/bymonth?year=${year}`);
+    };
+
+    const goToCategoryExpenses = () =>{
+        navigate(`/bycategory?year=${year}`)
+    }
 
    useEffect(()=>{
        async function fecthListHistory(){
@@ -53,6 +64,8 @@ function ListHistory({ month,year }){
 
    return(
      <>
+     <button onClick={goToCategoryExpenses}>Expenses by category</button>
+     <button onClick={goToMonthExpenses}>Monthly expenses</button>
      <p>Monthly Total: {monthyTotal}</p>
      <ul>
         {listHistory.map((itm)=>(
@@ -76,6 +89,7 @@ function TransactionHistory(){
 
     return(
     <>
+       <PrivateNavbar />
        <SelectHistory filterChange={handleFilter} />
        <ListHistory month={selectedMonth} year={selectedYear} />
     </>

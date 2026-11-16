@@ -129,3 +129,53 @@ export async function allTransactionsByMonthAndYear(month,year){
      console.log(error);
    }
 }
+
+export async function allTransactionsByMonth(year){
+  const options = {
+    method: "GET",
+    headers:{
+        "Content-Type":"application/json",
+        "X-CSRF-TOKEN": getCookie("csrf_access_token")
+    },
+    credentials:"include",
+   }
+
+   const request = new Request(`http://localhost:5000/api/transactions/stats/by-month?year=${year}`,options)
+   try {
+      const response = await fetch(request);
+      const result = await response.json();
+      if(response.ok){
+        return result;
+      }else{
+        return [];
+      }
+   } catch (error) {
+     console.log(error);
+   }
+}
+
+
+export async function allTransactionsByCategory(year){
+  const options = {
+    method: "GET",
+    headers:{
+        "Content-Type":"application/json",
+        "X-CSRF-TOKEN": getCookie("csrf_access_token")
+    },
+    credentials:"include",
+   }
+
+   const request = new Request(`http://localhost:5000/api/transactions/stats/by-category?year=${year}`,options);
+
+   try {
+      const response = await fetch(request);
+      const result = response.json();
+      if(response.ok){
+         return result;
+      }else{
+        return [];
+      }
+   } catch (error) {
+    console.log(error);
+   }
+}

@@ -6,7 +6,6 @@ function PrivateNavbar(){
         <nav>
             <Link to='/home-transaction'>Home</Link>
             <Link to='/history'>Transactions History</Link>
-            <Link to='/about'>About</Link>
         </nav>
         </>
     )
