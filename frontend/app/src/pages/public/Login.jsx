@@ -25,7 +25,7 @@ function Login(){
         "password": password
       }
       const condition = await loginUser(data);
-      if (condition.ok){ 
+      if (condition){ 
         login();
         return navigate("/Home");
       }else{

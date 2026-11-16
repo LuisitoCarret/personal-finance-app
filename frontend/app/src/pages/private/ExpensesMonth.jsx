@@ -9,7 +9,7 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { allTransactionsByMonth } from '../../services/transactionService';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 ChartJS.register(CategoryScale,LinearScale,BarElement,Title,Tooltip,Legend);
@@ -18,7 +18,7 @@ ChartJS.register(CategoryScale,LinearScale,BarElement,Title,Tooltip,Legend);
 function ExpensesMonth(){
     const [searchParams] = useSearchParams();
     const [items,setItems] = useState([]);
-    const yearParam = searchParams.get('year');
+    const yearParam = searchParams.get('year') || String(new Date().getFullYear());
     
     useEffect(()=>{
        async function fetchListByMonth(){
@@ -29,6 +29,32 @@ function ExpensesMonth(){
        }
        fetchListByMonth();
     },[yearParam])
+
+    const hasData = items.length > 0 && items.some((itm) => itm.amount > 0);
+    const navigate = useNavigate();
+
+  if (!hasData) {
+    return (
+      <div style={{
+        textAlign: 'center',
+        padding: '40px 20px',
+        margin: '30px auto',
+        maxWidth: '450px',
+        border: '1px dashed #ccc',
+        borderRadius: '12px',
+        backgroundColor: '#f9fafb'
+      }}>
+        <div style={{ fontSize: '48px', marginBottom: '10px' }}>📊</div>
+        <h3>No expenses found for {yearParam}</h3>
+        <p style={{ color: '#666', marginBottom: '20px' }}>
+          You haven't recorded any transactions for this year yet.Add a new expense or try searching another year.
+        </p>
+        <button onClick={() => navigate('/Home')}>
+          Add Transaction
+        </button>
+      </div>
+    );
+  }
     
      const options = {
       responsive: true,
@@ -38,7 +64,7 @@ function ExpensesMonth(){
         },
         title: {
           display: true,
-          text: 'Monthly expenses',
+          text: `Monthly expenses - ${yearParam}`,
         },
       },
     };
@@ -53,8 +79,8 @@ function ExpensesMonth(){
             borderWidth: 1,
             backgroundColor: 'rgba(0,166,237,0.8)'
         }]
-    }
-    return <Bar options={options} data={data} />
+    };
+    return (<><button onClick={()=> navigate("/history")}>⬅ Back</button><Bar options={options} data={data} /></>)
 }
 
 export default ExpensesMonth

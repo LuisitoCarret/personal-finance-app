@@ -1,38 +1,14 @@
+const BASE_URL = "http://localhost:5000/api";
+
 function getCookie(name){
    const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
-export async function createTransactions(data){
-    const options = {
-    method: "POST",
-    headers:{
-        "Content-Type":"application/json",
-        "X-CSRF-TOKEN": getCookie("csrf_access_token")
-    },
-    credentials:"include",
-    body:JSON.stringify(data)
-   }
-
-   const request = new Request("http://localhost:5000/api/add/transactions",options);
-
-   try {
-      const response = await fetch(request);
-      const result = await response.json()
-      if(response.ok){
-        return result.message
-      }else{
-        return result.message
-      }
-   } catch (error) {
-      console.log("Fetch Error",error)
-   }
-}
-
-export async function allTransactions(){
+async function apiRequest(endpoint, method="GET", body=null){
   const options = {
-    method: "GET",
+    method,
     headers:{
         "Content-Type":"application/json",
         "X-CSRF-TOKEN": getCookie("csrf_access_token")
@@ -40,142 +16,48 @@ export async function allTransactions(){
     credentials:"include",
    }
 
-   const request = new Request("http://localhost:5000/api/transactions",options)
+   if(body){
+    options.body = JSON.stringify(body);
+   }
 
    try {
-      const response = await fetch(request);
-      const result = await response.json();
-      if(response.ok){
-        return result;
-      }else{
-        return [];
-      }
+     const response = await fetch(`${BASE_URL}${endpoint}`,options);
+     const result = await response.json();
+     if(method === "GET" && !response.ok){
+       return [];
+     }
+     return result.message !== undefined ? result.message : result;
    } catch (error) {
      console.log(error);
+     return method === "GET" ? [] : null;
    }
 }
 
-export async function deleteTransaction(id){
-  const options = {
-    method: "DELETE",
-    headers:{
-        "Content-Type":"application/json",
-        "X-CSRF-TOKEN": getCookie("csrf_access_token")
-    },
-    credentials:"include",
-   }
-
-   const request = new Request(`http://localhost:5000/api/delete/transactions/${id}`,options);
-
-   try {
-    const response = await fetch(request);
-    const result = await response.json();
-    if(response.ok){
-       return result.message;
-    }else{
-      return result.message;
-    }
-   } catch (error) {
-    console.log(error);
-   }
+export const createTransactions = (data)=>{
+  return apiRequest("/add/transactions","POST",data);
 }
 
-export async function updateTransaction(id,data){
-  const options = {
-    method: "PUT",
-    headers:{
-        "Content-Type":"application/json",
-        "X-CSRF-TOKEN": getCookie("csrf_access_token")
-    },
-    credentials:"include",
-    body: JSON.stringify(data)
-   }
-
-   const request = new Request(`http://localhost:5000/api/update/transactions/${id}`,options);
-
-   try {
-    const response = await fetch(request);
-    const result = await response.json();
-    if(response.ok){
-       return result.message;
-    }else{
-      return result.message;
-    }
-   } catch (error) {
-    console.log(error);
-   }
+export const allTransactions = ()=>{
+  return apiRequest("/transactions");
 }
 
-export async function allTransactionsByMonthAndYear(month,year){
-  const options = {
-    method: "GET",
-    headers:{
-        "Content-Type":"application/json",
-        "X-CSRF-TOKEN": getCookie("csrf_access_token")
-    },
-    credentials:"include",
-   }
-
-   const request = new Request(`http://localhost:5000/api/transactions?month=${year}-${month}`,options)
-   try {
-      const response = await fetch(request);
-      const result = await response.json();
-      if(response.ok){
-        return result;
-      }else{
-        return [];
-      }
-   } catch (error) {
-     console.log(error);
-   }
+export const deleteTransaction = (id)=>{
+  return apiRequest(`/delete/transactions/${id}`,"DELETE");
 }
 
-export async function allTransactionsByMonth(year){
-  const options = {
-    method: "GET",
-    headers:{
-        "Content-Type":"application/json",
-        "X-CSRF-TOKEN": getCookie("csrf_access_token")
-    },
-    credentials:"include",
-   }
+export const updateTransaction = (id,data)=>{
+  return apiRequest(`/update/transactions/${id}`,"PUT",data);
+}
 
-   const request = new Request(`http://localhost:5000/api/transactions/stats/by-month?year=${year}`,options)
-   try {
-      const response = await fetch(request);
-      const result = await response.json();
-      if(response.ok){
-        return result;
-      }else{
-        return [];
-      }
-   } catch (error) {
-     console.log(error);
-   }
+export const allTransactionsByMonthAndYear = (month,year)=>{
+  return apiRequest(`/transactions?month=${year}-${month}`);
+}
+
+export const allTransactionsByMonth = (year)=>{
+  return apiRequest(`/transactions/stats/by-month?year=${year}`);
 }
 
 
-export async function allTransactionsByCategory(year){
-  const options = {
-    method: "GET",
-    headers:{
-        "Content-Type":"application/json",
-        "X-CSRF-TOKEN": getCookie("csrf_access_token")
-    },
-    credentials:"include",
-   }
-
-   const request = new Request(`http://localhost:5000/api/transactions/stats/by-category?year=${year}`,options);
-
-   try {
-      const response = await fetch(request);
-      const result = response.json();
-      if(response.ok){
-         return result;
-      }else{
-        return [];
-      }
-   } catch (error) {
-    console.log(error);
-   }
+export const allTransactionsByCategory = (year)=>{
+  return apiRequest(`/transactions/stats/by-category?year=${year}`);
 }

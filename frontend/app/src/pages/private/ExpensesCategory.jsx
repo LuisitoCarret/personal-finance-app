@@ -1,15 +1,15 @@
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
 import { allTransactionsByCategory } from '../../services/transactionService';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend, Title);
 
 function ExpensesCategory(){
     const [searchParams] = useSearchParams();
     const [items,setItems] = useState([]);
-    const yearParam = searchParams.get('year');
+    const yearParam = searchParams.get('year') || String(new Date().getFullYear());
     
     useEffect(()=>{
        async function fetchListByCategory(){
@@ -20,6 +20,32 @@ function ExpensesCategory(){
        }
        fetchListByCategory();
     },[yearParam])
+
+    const hasData = items.length > 0 && items.some((itm) => itm.amount > 0);
+    const navigate = useNavigate();
+
+    if(!hasData){
+      return (
+        <div style={{
+            textAlign: 'center',
+            padding: '40px 20px',
+            margin: '30px auto',
+            maxWidth: '450px',
+            border: '1px dashed #ccc',
+            borderRadius: '12px',
+            backgroundColor: '#f9fafb'
+          }}>
+        <div style={{ fontSize: '48px', marginBottom: '10px' }}>📊</div>
+        <h3>No expenses found for {yearParam}</h3>
+        <p style={{ color: '#666', marginBottom: '20px' }}>
+          You haven't recorded any transactions for this year yet.Add a new expense or try searching another year.
+        </p>
+        <button onClick={() => navigate('/Home')}>
+          Add Transaction
+        </button>
+        </div>
+      )
+    }
 
     const data={
         labels: items.map((itm)=>itm.category),
@@ -42,8 +68,26 @@ function ExpensesCategory(){
             ],
             borderWidth: 1,
         }]
-    }
-    return <Pie data={data} />
+    };
+
+    const options ={
+        responsive:true,
+        plugins:{
+            legend:{
+                position:'top',
+            },
+            title:{
+                display:true,
+                text:`Expenses by Category - ${yearParam}`,
+            }
+        }
+    };
+    return (
+    <>
+    <button onClick={()=> navigate("/history")}>⬅ Back</button> 
+    <Pie data={data} options={options} />
+    </>
+   )
 }
 
 export default ExpensesCategory
