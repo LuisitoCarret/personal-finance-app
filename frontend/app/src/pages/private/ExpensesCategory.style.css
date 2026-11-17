@@ -1,0 +1,244 @@
+@import "./HomeTransaction.style.css";
+
+.transaction-page--category > nav a:nth-child(2),
+.transaction-page--months > nav a:nth-child(2) {
+  color: var(--transaction-green);
+}
+
+.chart-page-shell {
+  max-width: 1180px;
+}
+
+.chart-page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.chart-page-heading .transaction-button {
+  flex: 0 0 auto;
+  margin-bottom: 5px;
+}
+
+.chart-empty-state {
+  display: grid;
+  justify-items: center;
+  padding: 64px 24px;
+  border: 1px solid #e7eeea;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgb(25 43 58 / 4%);
+  text-align: center;
+}
+
+.chart-empty-state__icon {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  margin-bottom: 16px;
+  border-radius: 16px;
+  color: var(--transaction-green);
+  background: #edf7f1;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.chart-empty-state h2 {
+  margin: 0 0 8px;
+  color: var(--transaction-ink);
+  font-size: 22px;
+  letter-spacing: -0.035em;
+}
+
+.chart-empty-state p {
+  margin: 0 0 22px;
+  color: var(--transaction-muted);
+  font-size: 14px;
+}
+
+.category-chart-card {
+  padding: 30px;
+  border: 1px solid #e7eeea;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgb(25 43 58 / 4%);
+}
+
+.category-chart-card__heading,
+.month-chart-card__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.category-chart-card__heading h2,
+.month-chart-card__heading h2 {
+  margin: 8px 0 0;
+  color: var(--transaction-ink);
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+.category-chart-card__year,
+.month-chart-card__year {
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--transaction-green);
+  background: #edf7f1;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.category-chart-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 0.9fr);
+  align-items: center;
+  gap: 34px;
+  margin-top: 24px;
+}
+
+.category-chart-visual {
+  display: grid;
+  min-height: 430px;
+  place-items: center;
+  border-radius: 14px;
+  background: #f8faf9;
+}
+
+.category-chart-plot {
+  position: relative;
+  width: min(100%, 410px);
+  height: 390px;
+  padding: 18px;
+}
+
+.category-chart-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  gap: 7px;
+  max-width: 65%;
+  justify-items: center;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  text-align: center;
+}
+
+.category-chart-center span {
+  color: var(--transaction-muted);
+  font-size: 12px;
+}
+
+.category-chart-center strong {
+  overflow: hidden;
+  color: var(--transaction-ink);
+  font-size: clamp(18px, 2.2vw, 26px);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-breakdown h3 {
+  margin: 0 0 10px;
+  color: var(--transaction-ink);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.category-breakdown ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.category-breakdown li {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 11px;
+  min-height: 58px;
+  border-bottom: 1px solid #edf1ef;
+}
+
+.category-breakdown__marker {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.category-breakdown__name {
+  overflow: hidden;
+  color: #43565f;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-breakdown__value {
+  color: var(--transaction-ink);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.category-breakdown__share {
+  min-width: 38px;
+  color: var(--transaction-muted);
+  font-size: 11px;
+  text-align: right;
+}
+
+@media (max-width: 800px) {
+  .category-chart-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+
+  .category-chart-visual {
+    min-height: 380px;
+  }
+
+  .category-chart-plot {
+    height: 360px;
+  }
+}
+
+@media (max-width: 600px) {
+  .chart-page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .chart-page-heading .transaction-button {
+    margin-bottom: 0;
+  }
+
+  .chart-empty-state,
+  .category-chart-card {
+    padding: 22px 18px;
+  }
+
+  .category-chart-visual {
+    min-height: 300px;
+  }
+
+  .category-chart-plot {
+    height: 290px;
+    padding: 12px;
+  }
+
+  .category-breakdown li {
+    gap: 8px;
+  }
+
+  .category-breakdown__value {
+    font-size: 12px;
+  }
+}

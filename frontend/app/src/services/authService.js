@@ -33,3 +33,7 @@ export const SignUp = (data)=> {
 export const loginUser = (body)=> {
  return apiRequest("/users/login",body,"include");
 }
+
+export const logoutUser = ()=> {
+ return apiRequest("/users/logout");
+}

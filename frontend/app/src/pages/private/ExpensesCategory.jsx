@@ -1,93 +1,125 @@
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Doughnut } from 'react-chartjs-2';
 import { allTransactionsByCategory } from '../../services/transactionService';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import PrivateNavbar from '../../components/PrivateNavbar';
+import './ExpensesCategory.style.css';
 
-ChartJS.register(ArcElement, Tooltip, Legend, Title);
+ChartJS.register(ArcElement, Tooltip, Legend);
 
-function ExpensesCategory(){
-    const [searchParams] = useSearchParams();
-    const [items,setItems] = useState([]);
-    const yearParam = searchParams.get('year') || String(new Date().getFullYear());
-    
-    useEffect(()=>{
-       async function fetchListByCategory(){
-         const result = await allTransactionsByCategory(yearParam);
-         if(result){
-            setItems(result);
-         }
-       }
-       fetchListByCategory();
-    },[yearParam])
+const categoryColors = ['#167c65', '#72b99b', '#a8d7bf', '#d2a85a', '#8ca7a0'];
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+});
 
-    const hasData = items.length > 0 && items.some((itm) => itm.amount > 0);
-    const navigate = useNavigate();
+function ExpensesCategory() {
+  const [searchParams] = useSearchParams();
+  const [items, setItems] = useState([]);
+  const yearParam = searchParams.get('year') || String(new Date().getFullYear());
+  const navigate = useNavigate();
 
-    if(!hasData){
-      return (
-        <div style={{
-            textAlign: 'center',
-            padding: '40px 20px',
-            margin: '30px auto',
-            maxWidth: '450px',
-            border: '1px dashed #ccc',
-            borderRadius: '12px',
-            backgroundColor: '#f9fafb'
-          }}>
-        <div style={{ fontSize: '48px', marginBottom: '10px' }}>📊</div>
-        <h3>No expenses found for {yearParam}</h3>
-        <p style={{ color: '#666', marginBottom: '20px' }}>
-          You haven't recorded any transactions for this year yet.Add a new expense or try searching another year.
-        </p>
-        <button onClick={() => navigate('/Home')}>
-          Add Transaction
-        </button>
-        </div>
-      )
+  useEffect(() => {
+    async function fetchListByCategory() {
+      const result = await allTransactionsByCategory(yearParam);
+      if (result) {
+        setItems(result);
+      }
     }
+    fetchListByCategory();
+  }, [yearParam]);
 
-    const data={
-        labels: items.map((itm)=>itm.category),
-        datasets:[{
-            label: 'Amounts',
-            data: items.map((itm)=> itm.amount),
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.2)',
-                'rgba(54, 162, 235, 0.2)',
-                'rgba(255, 206, 86, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(255, 159, 64, 0.2)',
-            ],
-            borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(255, 159, 64, 1)',
-            ],
-            borderWidth: 1,
-        }]
-    };
+  const hasData = items.length > 0 && items.some((item) => item.amount > 0);
+  const totalAmount = items.reduce((total, item) => total + Number(item.amount || 0), 0);
+  const data = {
+    labels: items.map((item) => item.category),
+    datasets: [{
+      data: items.map((item) => item.amount),
+      backgroundColor: items.map((_, index) => categoryColors[index % categoryColors.length]),
+      borderColor: '#ffffff',
+      borderWidth: 4,
+      hoverOffset: 8,
+    }],
+  };
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '68%',
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (context) => ` ${context.label}: ${currencyFormatter.format(context.raw)}`,
+        },
+      },
+    },
+  };
 
-    const options ={
-        responsive:true,
-        plugins:{
-            legend:{
-                position:'top',
-            },
-            title:{
-                display:true,
-                text:`Expenses by Category - ${yearParam}`,
-            }
-        }
-    };
-    return (
-    <>
-    <button onClick={()=> navigate("/history")}>⬅ Back</button> 
-    <Pie data={data} options={options} />
-    </>
-   )
+  return (
+    <div className="transaction-page transaction-page--charts transaction-page--category">
+      <PrivateNavbar />
+      <main className="transaction-shell chart-page-shell">
+        <header className="transaction-page-heading chart-page-heading">
+          <div>
+            <span className="transaction-eyebrow">YEARLY BREAKDOWN</span>
+            <h1>Expenses by category</h1>
+            <p>See how your spending is divided across categories in {yearParam}.</p>
+          </div>
+          <button className="transaction-button transaction-button--secondary" onClick={() => navigate('/history')}>
+            Back to history
+          </button>
+        </header>
+
+        {!hasData ? (
+          <section className="chart-empty-state">
+            <div className="chart-empty-state__icon" aria-hidden="true">$</div>
+            <h2>No expenses found for {yearParam}</h2>
+            <p>There is no category activity to display for this year yet.</p>
+            <button className="transaction-button transaction-button--primary" onClick={() => navigate('/home-transaction')}>
+              Add a transaction
+            </button>
+          </section>
+        ) : (
+          <section className="category-chart-card">
+            <div className="category-chart-card__heading">
+              <div>
+                <span className="transaction-eyebrow">SPENDING MIX</span>
+                <h2>Annual category totals</h2>
+              </div>
+              <div className="category-chart-card__year">{yearParam}</div>
+            </div>
+            <div className="category-chart-layout">
+              <div className="category-chart-visual">
+                <div className="category-chart-plot">
+                  <Doughnut data={data} options={options} />
+                  <div className="category-chart-center">
+                    <span>Total expenses</span>
+                    <strong>{currencyFormatter.format(totalAmount)}</strong>
+                  </div>
+                </div>
+              </div>
+              <div className="category-breakdown">
+                <h3>By category</h3>
+                <ul>
+                  {items.map((item, index) => (
+                    <li key={item.category}>
+                      <span className="category-breakdown__marker" style={{ backgroundColor: categoryColors[index % categoryColors.length] }} />
+                      <span className="category-breakdown__name">{item.category}</span>
+                      <span className="category-breakdown__value">{currencyFormatter.format(Number(item.amount))}</span>
+                      <span className="category-breakdown__share">
+                        {totalAmount > 0 ? `${Math.round((Number(item.amount) / totalAmount) * 100)}%` : '0%'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </section>
+        )}
+      </main>
+    </div>
+  );
 }
 
-export default ExpensesCategory
+export default ExpensesCategory;

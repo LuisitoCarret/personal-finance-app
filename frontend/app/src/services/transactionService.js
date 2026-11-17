@@ -37,8 +37,9 @@ export const createTransactions = (data)=>{
   return apiRequest("/add/transactions","POST",data);
 }
 
-export const allTransactions = ()=>{
-  return apiRequest("/transactions");
+export const allTransactions = (page=1,perPage=10)=>{
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+  return apiRequest(`/transactions?${params}`);
 }
 
 export const deleteTransaction = (id)=>{
@@ -49,8 +50,13 @@ export const updateTransaction = (id,data)=>{
   return apiRequest(`/update/transactions/${id}`,"PUT",data);
 }
 
-export const allTransactionsByMonthAndYear = (month,year)=>{
-  return apiRequest(`/transactions?month=${year}-${month}`);
+export const allTransactionsByMonthAndYear = (month,year,page=1,perPage=10)=>{
+  const params = new URLSearchParams({
+    month: `${year}-${month}`,
+    page: String(page),
+    per_page: String(perPage)
+  });
+  return apiRequest(`/transactions?${params}`);
 }
 
 export const allTransactionsByMonth = (year)=>{

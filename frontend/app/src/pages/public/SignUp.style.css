@@ -1,0 +1,57 @@
+.login-page--signup > nav a:first-child {
+  color: var(--login-green);
+}
+
+.login-page--signup .login-panel {
+  justify-content: flex-start;
+  padding-top: 96px;
+}
+
+.login-page--signup .login-card {
+  width: min(100%, 470px);
+}
+
+.login-page--signup .login-card__mark {
+  margin-bottom: 24px;
+}
+
+.login-page--signup .login-fields {
+  gap: 16px;
+  margin-top: 25px;
+}
+
+.login-page--signup .login-field label {
+  margin-bottom: 6px;
+}
+
+.login-page--signup .login-field input {
+  height: 45px;
+}
+
+.signup-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.login-page--signup .login-submit {
+  margin-top: 22px;
+}
+
+.login-page--signup .login-signup {
+  margin-top: 18px;
+}
+
+.login-page--signup .login-footer {
+  padding-top: 28px;
+}
+
+@media (max-width: 680px) {
+  .login-page--signup .login-panel {
+    padding-top: 96px;
+  }
+}
+
+@media (max-width: 420px) {
+  .signup-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

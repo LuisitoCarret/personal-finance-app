@@ -1,0 +1,11 @@
+@import "./HomeTransaction.style.css";
+
+.transaction-page--history .transaction-list li {
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 680px) {
+  .transaction-page--history .transaction-list li {
+    flex-wrap: wrap;
+  }
+}
